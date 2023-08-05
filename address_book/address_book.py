@@ -6,14 +6,14 @@ import re
 from abc import ABC, abstractmethod
 
 
-tutorial = '''
+tutorial = """
 Adding instruction:
   name - no more than three words
   phones - can be several (each must contain 10 to 12 digits), enter with a space
   emails - can be several, enter with a space
   birthday - date in format dd/mm/yyyy (must be only one)
   address - must contain street and house number, all elements must be separated by a slash and start with a slash (example: /Country/City/Street/House)
-'''
+"""
 
 
 def get_valid_input(prompt, pattern=None):
@@ -49,10 +49,22 @@ class AddressBook(UserDict):
         try:
             with open(filename, "r") as file:
                 for line in file:
-                    name, phones, birthday, emails, address = self._parse_record_from_txt(
-                        line.strip())
-                    self.add_record(Record(Name(name), Phone(phones),
-                                           Birthday(birthday), Email(emails), Address(address)))
+                    (
+                        name,
+                        phones,
+                        birthday,
+                        emails,
+                        address,
+                    ) = self._parse_record_from_txt(line.strip())
+                    self.add_record(
+                        Record(
+                            Name(name),
+                            Phone(phones),
+                            Birthday(birthday),
+                            Email(emails),
+                            Address(address),
+                        )
+                    )
             print("Address book data loaded from txt file.")
         except FileNotFoundError:
             print("File not found. Creating a new AddressBook.")
@@ -61,7 +73,7 @@ class AddressBook(UserDict):
     def _format_record_to_txt(self, record):
         name = record.Name.name
         phones = " ".join(record.Phones.phone)
-        birthday = record.Birthday.birthday[0] if record.Birthday.birthday else ''
+        birthday = record.Birthday.birthday[0] if record.Birthday.birthday else ""
         emails = " ".join(record.Emails.email)
         address = " ".join(record.Address.address)
         return f"{name} | {phones} | {birthday} | {emails} | {address}"
@@ -144,17 +156,19 @@ class Record:
             return "The birthday date is unknown."
 
         current_datetime = datetime.now()
-        birthday = datetime.strptime(self.Birthday.birthday[0], '%d/%m/%Y')
-        if (
-            current_datetime.month > birthday.month
-            or (current_datetime.month == birthday.month and current_datetime.day >= birthday.day)
+        birthday = datetime.strptime(self.Birthday.birthday[0], "%d/%m/%Y")
+        if current_datetime.month > birthday.month or (
+            current_datetime.month == birthday.month
+            and current_datetime.day >= birthday.day
         ):
             next_birthday = datetime(
-                year=current_datetime.year + 1, month=birthday.month, day=birthday.day)
+                year=current_datetime.year + 1, month=birthday.month, day=birthday.day
+            )
             return f"In {(next_birthday - current_datetime).days} days"
         else:
             next_birthday = datetime(
-                year=current_datetime.year, month=birthday.month, day=birthday.day)
+                year=current_datetime.year, month=birthday.month, day=birthday.day
+            )
             return f"Birthday in {(next_birthday - current_datetime).days} days"
 
     def __str__(self):
@@ -166,14 +180,19 @@ class Field:
         if isinstance(data, str):  # Check if data is a string
             data = data.split()
         # Update the attributes for individual fields
-        self.name = data[0].capitalize() if data else ''
-        self.phone = [phone for phone in data if len(
-            phone) >= 10 and len(phone) <= 12 and phone.isdigit()]
-        self.birthday = [date for date in data if re.match(
-            r'\d{2}/\d{2}/\d{4}', date)]
-        self.email = [email for email in data if re.match(
-            r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b', email)]
-        self.address = [address for address in data if address.startswith('/')]
+        self.name = data[0].capitalize() if data else ""
+        self.phone = [
+            phone
+            for phone in data
+            if len(phone) >= 10 and len(phone) <= 12 and phone.isdigit()
+        ]
+        self.birthday = [date for date in data if re.match(r"\d{2}/\d{2}/\d{4}", date)]
+        self.email = [
+            email
+            for email in data
+            if re.match(r"\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b", email)
+        ]
+        self.address = [address for address in data if address.startswith("/")]
 
 
 class Phone(Field):
@@ -214,12 +233,13 @@ def input_error(func):
                 result = func()
                 flag = False
             except IndexError:
-                print('Enter the name and numbers separated by a space.')
+                print("Enter the name and numbers separated by a space.")
             except ValueError:
-                print('I have no idea how you did it, try again.')
+                print("I have no idea how you did it, try again.")
             except KeyError:
                 print("The contact is missing.")
         return result
+
     return inner
 
 
@@ -233,7 +253,8 @@ def validate_field(info, pattern, error_msg):
 def add_contact(CONTACTS):
     print(tutorial)
     contact_info = get_valid_input(
-        "Enter contact's name, phone number(s), email(s), birthday (dd/mm/yyyy), and address: ")
+        "Enter contact's name, phone number(s), email(s), birthday (dd/mm/yyyy), and address: "
+    )
 
     data = contact_info.split(maxsplit=4)
     if len(data) < 5:
@@ -242,11 +263,12 @@ def add_contact(CONTACTS):
 
     name, phone_data, email_data, birthday_data, address_data = data
 
-    phones = re.findall(r'\b\d{10,12}\b', phone_data)
+    phones = re.findall(r"\b\d{10,12}\b", phone_data)
     emails = re.findall(
-        r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b', email_data)
-    birthday = re.findall(r'\b\d{2}/\d{2}/\d{4}\b', birthday_data)
-    address = re.findall(r'\/(?:[^\/]*\/)*[^\/]+\/\d+\b', address_data)
+        r"\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b", email_data
+    )
+    birthday = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", birthday_data)
+    address = re.findall(r"\/(?:[^\/]*\/)*[^\/]+\/\d+\b", address_data)
 
     if not name or not phones or not emails or not birthday or not address:
         print("Invalid information provided.")
@@ -255,35 +277,41 @@ def add_contact(CONTACTS):
     if name in CONTACTS.data:
         CONTACTS.data[name].add_phone(Phone(phones))
     else:
-        CONTACTS.add_record(Record(Name(name), Phone(phones),
-                                   Birthday(birthday), Email(emails), Address(address)))
+        CONTACTS.add_record(
+            Record(
+                Name(name),
+                Phone(phones),
+                Birthday(birthday),
+                Email(emails),
+                Address(address),
+            )
+        )
 
 
 def show_contact_phones(CONTACTS):
-    command = input('Enter the name of the contact: ').capitalize()
+    command = input("Enter the name of the contact: ").capitalize()
     if command in CONTACTS.data:
-        print(
-            f"Contact's phones: {', '.join(CONTACTS.data[command].Phones.phone)}")
+        print(f"Contact's phones: {', '.join(CONTACTS.data[command].Phones.phone)}")
     else:
         print("Contact not found!")
 
 
 def search_contacts(CONTACTS):
-    command = input('Enter any piece of information: ')
+    command = input("Enter any piece of information: ")
     if result := CONTACTS.find(command):
         for contact_info in result:
             print(contact_info)
     else:
-        print('No matches')
+        print("No matches")
 
 
 def show_days_to_birthday(CONTACTS):
-    command = input('Enter the name of the contact: ').capitalize()
+    command = input("Enter the name of the contact: ").capitalize()
     print(CONTACTS.days_to_birthday(command))
 
 
 def show_contacts_in_days(CONTACTS):
-    command = int(input('Enter the number of days: '))
+    command = int(input("Enter the number of days: "))
     if contacts_in_days := CONTACTS.contacts_in_days(command):
         print("The following contacts have birthdays within", command, "days:")
         for contact in contacts_in_days:
@@ -304,31 +332,35 @@ def change_contact_data(CONTACTS):
     print("8. Delete address")
     print("9. Go back")
     action = input("Enter the number of the action: ")
-    command = input('Enter the name of the contact: ').capitalize()
+    command = input("Enter the name of the contact: ").capitalize()
     if command in CONTACTS.data:
-        if action == '1':
+        if action == "1":
             CONTACTS.data[command].add_phone(
-                Phone(input("Enter the phone number(s) separated by space: ")))
-        elif action == '2':
+                Phone(input("Enter the phone number(s) separated by space: "))
+            )
+        elif action == "2":
             CONTACTS.data[command].delete_phone(
-                Phone(input("Enter the phone number(s) separated by space: ")))
-        elif action == '3':
+                Phone(input("Enter the phone number(s) separated by space: "))
+            )
+        elif action == "3":
             CONTACTS.data[command].change_birthday(
-                Birthday(input("Enter the birthday (dd/mm/yyyy): ")))
-        elif action == '4':
+                Birthday(input("Enter the birthday (dd/mm/yyyy): "))
+            )
+        elif action == "4":
             CONTACTS.data[command].delete_birthday()
-        elif action == '5':
+        elif action == "5":
             CONTACTS.data[command].change_email(
-                Email(input("Enter the email(s) separated by space: ")))
-        elif action == '6':
+                Email(input("Enter the email(s) separated by space: "))
+            )
+        elif action == "6":
             CONTACTS.data[command].delete_email(
-                Email(input("Enter the email(s) separated by space: ")))
-        elif action == '7':
-            CONTACTS.data[command].change_address(
-                Address(input("Enter the address: ")))
-        elif action == '8':
+                Email(input("Enter the email(s) separated by space: "))
+            )
+        elif action == "7":
+            CONTACTS.data[command].change_address(Address(input("Enter the address: ")))
+        elif action == "8":
             CONTACTS.data[command].delete_address()
-        elif action != '9':
+        elif action != "9":
             print("Invalid action.")
     else:
         print("Contact not found!")
@@ -343,21 +375,23 @@ def delete_contact_data(CONTACTS):
     print("5. Delete contact")
     print("6. Go back")
     action = input("Enter the number of the action: ")
-    command = input('Enter the name of the contact: ').capitalize()
+    command = input("Enter the name of the contact: ").capitalize()
     if command in CONTACTS.data:
-        if action == '1':
+        if action == "1":
             CONTACTS.data[command].delete_phone(
-                Phone(input("Enter the phone number(s) separated by space: ")))
-        elif action == '2':
+                Phone(input("Enter the phone number(s) separated by space: "))
+            )
+        elif action == "2":
             CONTACTS.data[command].delete_email(
-                Email(input("Enter the email(s) separated by space: ")))
-        elif action == '3':
+                Email(input("Enter the email(s) separated by space: "))
+            )
+        elif action == "3":
             CONTACTS.data[command].delete_birthday()
-        elif action == '4':
+        elif action == "4":
             CONTACTS.data[command].delete_address()
-        elif action == '5':
+        elif action == "5":
             CONTACTS.delete_record(command)
-        elif action != '6':
+        elif action != "6":
             print("Invalid action.")
     else:
         print("Contact not found!")
@@ -375,17 +409,21 @@ def load_address_book(CONTACTS):
 
 class ConsoleUI(UserInterface):
     def display_contacts(self, contacts):
-        table = PrettyTable(['Name', 'Phone', 'Birthday', 'Email', 'Address'])
+        table = PrettyTable(["Name", "Phone", "Birthday", "Email", "Address"])
         for contact in contacts:
-            table.add_row([contact.Name.name,
-                           ", ".join(contact.Phones.phone),
-                           contact.Birthday.birthday[0] if contact.Birthday.birthday else "",
-                           ", ".join(contact.Emails.email),
-                           contact.Address.address[0] if contact.Address.address else ""])
+            table.add_row(
+                [
+                    contact.Name.name,
+                    ", ".join(contact.Phones.phone),
+                    contact.Birthday.birthday[0] if contact.Birthday.birthday else "",
+                    ", ".join(contact.Emails.email),
+                    contact.Address.address[0] if contact.Address.address else "",
+                ]
+            )
         print(table)
 
     def display_commands(self, commands):
-        table = PrettyTable(['Command', 'Instruction'])
+        table = PrettyTable(["Command", "Instruction"])
         table.add_rows(commands)
         table.align["Instruction"] = "l"
         print(table)
@@ -416,7 +454,10 @@ def main():
         ["2", "Shows phone numbers of a particular contact"],
         ["3", "Search for matches among existing contacts"],
         ["4", "Calculates the number of days until the contact's next birthday"],
-        ["5", "Displays the names of contacts whose birthday is in the specified number of days"],
+        [
+            "5",
+            "Displays the names of contacts whose birthday is in the specified number of days",
+        ],
         ["6", "Change any contact's data"],
         ["7", "Delete any contact's data"],
         ["8", "Show you the full list of contacts in the address book"],
