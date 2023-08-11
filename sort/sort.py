@@ -6,6 +6,7 @@ import sys
 import zipfile
 import tarfile
 import gzip
+from concurrent.futures import ThreadPoolExecutor
 
 
 # Define an abstract base class for user interfaces
@@ -181,6 +182,18 @@ def extract_file(file_path, destination_folder):
     os.remove(file_path)
 
 
+def process_subdirectory(directory):
+    sort_files(directory)
+
+
+def process_directory(folder_path):
+    with ThreadPoolExecutor() as executor:
+        for root, dirs, _ in os.walk(folder_path, topdown=True):
+            for directory in dirs:
+                executor.submit(process_subdirectory,
+                                os.path.join(root, directory))
+
+
 def main():
     table = PrettyTable(["Command", "Instruction"])
     table.add_rows(
@@ -205,7 +218,7 @@ def main():
                 ui.show_message("Invalid folder path.")
                 sys.exit(1)
 
-            sort_files(folder_path)
+            process_directory(folder_path)
             ui.show_message("File sorting completed successfully.")
 
         elif command == "2":
